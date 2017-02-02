@@ -6,6 +6,9 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Security.Permissions;
 using System.Diagnostics;
+using System.Drawing;
+using System.Drawing.Printing;
+
 
 namespace photowatcher
 {
@@ -43,18 +46,44 @@ namespace photowatcher
             try
             {
                 Console.WriteLine("File: " + e.FullPath + " " + e.ChangeType);
-                ProcessStartInfo startInfo = new ProcessStartInfo();
+                /*(ProcessStartInfo startInfo = new ProcessStartInfo();
                 startInfo.FileName = "C:\\Windows\\System32\\mspaint.exe";
                 startInfo.Arguments = " -p " + e.FullPath;
                 using (Process exeProcess = Process.Start(startInfo))
                 {
                     exeProcess.WaitForExit();
-                }
+                }*/
+                SendToPrinter(source, e);
             }
             catch
             {
                 //error
-            } 
+            }
+
+        }
+
+        private static void SendToPrinter(object source, FileSystemEventArgs e)
+        {
+            try
+            {
+                //System.Threading.Thread.Sleep(2000);
+                PrintDocument pd = new PrintDocument();
+                pd.DefaultPageSettings.PrinterSettings.PrinterName = "Canon SELPHY CP720";
+                //pd.DefaultPageSettings.PrinterSettings.PrinterName = "Canon MF240 Series PCL6";
+                pd.DefaultPageSettings.Landscape = true; //or false!
+                pd.DefaultPageSettings.Margins = new Margins(0, 0, 0, 0); 
+                //pd.DefaultPageSettings.PaperSize = new PaperSize("4x5", 320, 960);
+                pd.PrintPage += (sender, args) =>
+                {
+                    Image i = Image.FromFile(e.FullPath);
+                    args.Graphics.DrawImage(i, args.MarginBounds);
+                };
+                pd.Print();
+            }
+            catch (Exception exc)
+            {
+                System.Diagnostics.Debug.WriteLine(exc.ToString());
+            }
 
         }
     }
